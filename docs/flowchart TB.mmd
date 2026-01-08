@@ -1,0 +1,35 @@
+flowchart LR
+    subgraph SOURCE["🔄 Source Commune"]
+        AIRBYTE["Airbyte<br/>Extraction données"]
+        S3["S3<br/>Données brutes"]
+        AIRBYTE --> S3
+    end
+    
+    subgraph LOCAL["💻 Environnement LOCAL (Dev)"]
+
+        direction TB
+        L_DOCKER["Docker Compose<br/>Transformation"]
+        L_MONGO["MongoDB ReplicaSet<br/>mongo1 + mongo2 + arbiter"]
+        L_LOGS["📄 Logs fichiers/console"]
+        
+        L_DOCKER --> L_MONGO
+        L_DOCKER --> L_LOGS
+    end
+    
+    subgraph PROD["☁️ Environnement PRODUCTION (AWS)"]
+
+        direction TB
+        "" ""
+        P_ECS["ECS Fargate<br/>Transformation"]
+
+        P_ATLAS["MongoDB Atlas<br/>ReplicaSet 3 nœuds"]
+
+        P_CW["☁️ CloudWatch<br/>Logs"]
+        
+        P_ECS --> P_ATLAS
+
+        P_ECS --> P_CW
+    end
+    
+    S3 --> L_DOCKER
+    S3 --> P_ECS

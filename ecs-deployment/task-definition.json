@@ -1,0 +1,42 @@
+{
+    "family": "forecast-etl",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "512",
+    "memory": "1024",
+    "executionRoleArn": "arn:aws:iam::718281697661:role/ecsTaskExecutionRole",
+    "taskRoleArn": "arn:aws:iam::718281697661:role/forecast-etl-task-role",
+    "containerDefinitions": [
+        {
+            "name": "forecast-etl",
+            "image": "718281697661.dkr.ecr.eu-west-3.amazonaws.com/forecast-etl:latest",
+            "essential": true,
+            "environment": [
+                {
+                    "name": "MONGO_URI",
+                    "value": "mongodb+srv://mbodjabdselam33:uKOipSBHr7AbpYmD@forecast-cluster.meeiptz.mongodb.net/?appName=forecast-cluster"
+                },
+                {
+                    "name": "MONGO_DB_NAME",
+                    "value": "greenandcoop_weather"
+                },
+                {
+                    "name": "S3_BUCKET_NAME",
+                    "value": "greenandcoop-forecast-raw-data"
+                },
+                {
+                    "name": "AWS_REGION",
+                    "value": "eu-west-3"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/forecast-etl",
+                    "awslogs-region": "eu-west-3",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            }
+        }
+    ]
+}
