@@ -695,10 +695,9 @@ greenandcoop-forecast/
 
 ## 📞 Contact
 
-**Projet** : Forecast 2.0 - GreenAndCoop  
-**Chef de projet** : Ouly (Data Science)  
-**Data Engineer** : [Votre nom]  
-**Date** : Décembre 2024
+**Projet** : Forecast 2.0 - GreenAndCoop   
+**Data Engineer** : Abd Selam M'BODJ  
+**Date** : Décembre 2025
 
 ---
 
