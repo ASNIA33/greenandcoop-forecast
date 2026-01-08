@@ -585,5 +585,5 @@ alias ecs-run='aws ecs run-task --cluster $ECS_CLUSTER --task-definition $ECS_TA
 
 **Projet Forecast 2.0** - GreenAndCoop  
 Région AWS : `eu-west-3` (Paris)  
-Dernière mise à jour : Décembre 2024
+Dernière mise à jour : Décembre 2025
 
