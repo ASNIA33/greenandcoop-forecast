@@ -1,0 +1,111 @@
+#version: '3.8'
+
+services:
+  # APPLICATION PYTHON (ETL)
+  etl-job:
+    build: . 
+    container_name: forecast-etl
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully # Attend que le Replica Set soit INITIALISÉ
+      mongo1:
+        condition: service_healthy
+    env_file:
+      - config/.env 
+    environment:
+      - MONGO_HOST=mongo1
+      - MONGO_REPLICA_SET=rs0
+    volumes:
+      - ./logs:/app/logs 
+      - ./data:/app/data 
+    networks:
+      - mongo-net
+
+  # CLUSTER MONGODB
+  mongo1:
+    image: mongo:6.0
+    container_name: mongo1
+    command: ["--replSet", "rs0", "--bind_ip_all", "--keyFile", "/etc/mongo-keyfile"]
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+    volumes:
+      - mongo1_data:/data/db
+      - ./mongo-keyfile:/etc/mongo-keyfile:ro
+    networks:
+      - mongo-net
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s       
+      timeout: 10s        
+      retries: 5
+      start_period: 40s   
+
+  mongo2:
+    image: mongo:6.0
+    container_name: mongo2
+    command: ["--replSet", "rs0", "--bind_ip_all", "--keyFile", "/etc/mongo-keyfile"]
+    ports:
+      - 27018:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+    volumes:
+      - mongo2_data:/data/db
+      - ./mongo-keyfile:/etc/mongo-keyfile:ro
+    networks:
+      - mongo-net
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27018/test --quiet
+      interval: 10s       
+      timeout: 10s        
+      retries: 5
+      start_period: 40s   
+
+  mongo-arbiter:
+    image: mongo:6.0
+    container_name: mongo-arbiter
+    command: ["--replSet", "rs0", "--bind_ip_all", "--keyFile", "/etc/mongo-keyfile"]
+    ports:
+      - 27019:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+    volumes:
+      - ./mongo-keyfile:/etc/mongo-keyfile:ro
+    networks:
+      - mongo-net
+
+  mongo-init:
+    image: mongo:6.0
+    depends_on:
+      mongo1:
+        condition: service_healthy
+      mongo2:
+        condition: service_started
+      mongo-arbiter:
+        condition: service_started
+    networks:
+      - mongo-net
+    volumes:
+      - ./mongo-keyfile:/etc/mongo-keyfile:ro
+    command: >
+      bash -c "
+      echo 'Attente de la disponibilité réseau de mongo1...';
+      until mongosh --host mongo1:27017 --eval 'db.runCommand({ping:1})' &>/dev/null; do
+        echo 'Mongo1 n est pas encore prêt (ECONNREFUSED) - nouvelle tentative dans 2s...';
+        sleep 2;
+      done;
+      echo 'Mongo1 répond ! Initialisation du Replica Set...';
+      mongosh --host mongo1:27017 -u admin -p password123 --authenticationDatabase admin --eval 'rs.initiate({_id: \"rs0\", members: [{_id: 0, host: \"mongo1:27017\", priority: 2}, {_id: 1, host: \"mongo2:27017\", priority: 1}, {_id: 2, host: \"mongo-arbiter:27017\", arbiterOnly: true}]})'
+      "
+
+networks:
+  mongo-net:
+    driver: bridge
+
+volumes:
+  mongo1_data:
+  mongo2_data:

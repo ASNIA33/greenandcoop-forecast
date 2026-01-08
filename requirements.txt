@@ -1,0 +1,13 @@
+# Data Engineering
+pandas==2.1.1
+numpy==1.26.0
+openpyxl==3.1.2         # Pour lire les .xlsx
+boto3==1.28.57          # SDK AWS pour interagir avec S3
+
+# Base de données et validations
+pymongo==4.5.0          # Driver MongoDB
+pydantic==2.4.2         # Pour valider le schéma des données
+
+# Utilities
+python-dotenv==1.0.0    # Pour charger les variables .env
+pytest==7.4.2           # Pour les tests unitaires
